@@ -14,4 +14,4 @@ class TodoList:
     def delete_task(self, task_number):
         if not 1 <= task_number <= len(self.tasks):
             raise IndexError("任务编号不存在")
-        return self.tasks.pop(task_number - 1)
+        return self.tasks.pop(task_number-1)
