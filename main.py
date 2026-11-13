@@ -1,6 +1,9 @@
 
+from todo import TodoList
+
+
 def main():
-    tasks = []
+    todo = TodoList()
 
     while True:
         print("\n===== Todo List =====")
@@ -12,41 +15,30 @@ def main():
         choice = input("请选择操作 (1/2/3/4): ")
 
         if choice == "1":
-            task = input("请输入任务内容: ").strip()
-            if task:
-                tasks.append(task)
+            task = input("请输入任务内容: ")
+            try:
+                todo.add_task(task)
                 print("任务添加成功！")
-            else:
-                print("任务内容不能为空。")
+            except ValueError as e:
+                print(e)
 
         elif choice == "2":
+            tasks = todo.get_tasks()
             if not tasks:
                 print("当前没有任务。")
             else:
-                for index, task in enumerate(tasks, start=1):
-                    print(f"{index}. {task}")
+                for i, task in enumerate(tasks, 1):
+                    print(f"{i}. {task}")
 
         elif choice == "3":
-            if not tasks:
-                print("当前没有可删除的任务。")
-                continue
-
-            for index, task in enumerate(tasks, start=1):
-                print(f"{index}. {task}")
-
-            task_id = input("请输入要删除的任务编号: ").strip()
-
-            if not task_id.isdigit():
-                print("请输入有效的任务编号。")
-                continue
-
-            task_index = int(task_id) - 1
-
-            if 0 <= task_index < len(tasks):
-                removed_task = tasks.pop(task_index)
-                print(f"已删除任务: {removed_task}")
-            else:
-                print("任务编号不存在。")
+            try:
+                number = int(input("请输入任务编号: "))
+                removed = todo.delete_task(number)
+                print(f"已删除任务: {removed}")
+            except ValueError:
+                print("请输入整数编号")
+            except IndexError as e:
+                print(e)
 
         elif choice == "4":
             print("再见！")
@@ -58,4 +50,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-  
