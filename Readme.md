@@ -70,3 +70,11 @@ python-todo-cli/
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for details.
+
+
+## Running Tests
+
+Install development dependencies:
+
+```bash
+python -m pip install -r requirements-dev.txt
