@@ -20,3 +20,6 @@ env/
 
 # Temporary files
 *.log
+
+# Local todo data
+tasks.json
