@@ -63,9 +63,9 @@ python-todo-cli/
 
 - [x] Add tasks
 - [x] View tasks
-- [ ] Mark tasks as completed
-- [ ] Delete tasks
-- [ ] Save tasks to a JSON file
+- [x] Mark tasks as completed
+- [x] Delete tasks
+- [x] Save tasks to a JSON file
 
 ## License
 
@@ -78,3 +78,34 @@ Install development dependencies:
 
 ```bash
 python -m pip install -r requirements-dev.txt
+
+## Features
+
+- Add new tasks
+- View all tasks
+- Delete tasks by number
+- Automatically save tasks to a local JSON file
+- Restore previous tasks when the application restarts
+- Handle invalid task inputs and data files
+
+## Data Persistence
+
+Task data is stored locally in `tasks.json`.
+
+The file is automatically created when tasks are saved and loaded when the application starts.
+
+The task data file is excluded from Git version control.
+
+## Testing
+
+Install development dependencies:
+
+```bash
+python -m pip install -r requirements-dev.txt
+```
+
+Run all tests:
+
+```bash
+python -m pytest -v
+```
