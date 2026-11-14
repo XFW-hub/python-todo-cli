@@ -147,3 +147,64 @@ GitHub Actions automatically:
 - Runs the pytest test suite
 - Builds the Docker image
 - Reports the result on pull requests targeting `main`
+
+
+## FastAPI Web Service
+
+Python Todo CLI also provides a REST API built with FastAPI.
+
+### Run locally
+
+Install dependencies:
+
+```bash
+python -m pip install -r requirements-api.txt
+```
+
+Start the API server:
+
+```bash
+python -m uvicorn api:app --reload
+```
+
+API documentation:
+
+http://127.0.0.1:8000/docs
+
+### Available endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/health` | Health check |
+| GET | `/tasks` | List all tasks |
+| POST | `/tasks` | Create a task |
+| DELETE | `/tasks/{task_id}` | Delete a task |
+
+### Run with Docker
+
+Build the image:
+
+```bash
+docker build -f Dockerfile.web -t python-todo-api:dev .
+```
+
+Run the container:
+
+```bash
+docker run -d \
+  --name todo-api \
+  -p 127.0.0.1:8000:8000 \
+  -v todo-api-data:/app/data \
+  python-todo-api:dev
+```
+
+### Run tests
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -v
+```
+
+### Limitations
+
+This API is intended for local development and learning. It has no authentication, uses a JSON file for storage, and is designed for a single server process.

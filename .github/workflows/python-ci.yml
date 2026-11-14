@@ -34,3 +34,27 @@ jobs:
       - name: Build Docker image
         run: |
           docker build -t python-todo-cli:ci .
+      
+      - name: Build FastAPI Docker image
+        run: |
+          docker build \
+            -f Dockerfile.web \
+            -t python-todo-api:ci .
+
+      - name: Smoke test FastAPI container
+        run: |
+          docker run -d --name todo-api-ci \
+            -p 127.0.0.1:8000:8000 python-todo-api:ci
+
+          for i in $(seq 1 20); do
+            if curl --fail --silent \
+              http://127.0.0.1:8000/health; then
+              docker rm -f todo-api-ci
+              exit 0
+            fi
+            sleep 1
+          done
+
+          docker logs todo-api-ci
+          docker rm -f todo-api-ci
+          exit 1
