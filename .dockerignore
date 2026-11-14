@@ -1,0 +1,14 @@
+.git
+.github
+.venv
+__pycache__
+.pytest_cache
+*.pyc
+.DS_Store
+.env
+.env.*
+tasks.json
+test_todo.py
+requirements-dev.txt
+README.md
+LICENSE
