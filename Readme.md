@@ -109,3 +109,41 @@ Run all tests:
 ```bash
 python -m pytest -v
 ```
+
+## Run with Docker
+
+Build the Docker image:
+
+```bash
+docker build -t python-todo-cli:docker-demo .
+```
+
+Run the application:
+
+```bash
+docker run -it --rm python-todo-cli:docker-demo
+```
+
+To preserve tasks between container runs, create a Docker volume:
+
+```bash
+docker volume create todo-cli-data
+```
+
+Then start the application with the volume mounted:
+
+```bash
+docker run -it --rm \
+  -v todo-cli-data:/app/data \
+  python-todo-cli:docker-demo
+```
+
+Task data is saved in the Docker-managed volume and can be reused by future containers.
+
+## Continuous Integration
+
+GitHub Actions automatically:
+
+- Runs the pytest test suite
+- Builds the Docker image
+- Reports the result on pull requests targeting `main`
