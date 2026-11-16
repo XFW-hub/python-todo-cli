@@ -12,3 +12,8 @@ test_todo.py
 requirements-dev.txt
 README.md
 LICENSE
+# SQLite databases
+*.db
+*.db-wal
+*.db-shm
+*.db-journal

@@ -23,3 +23,4 @@ env/
 
 # Local todo data
 tasks.json
+tasks.db

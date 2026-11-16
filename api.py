@@ -1,27 +1,32 @@
 
 import os
 from pathlib import Path
-from threading import Lock
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 
-from todo import TodoList
+from database import Task, create_database
 
 
 class TaskCreate(BaseModel):
     title: str = Field(min_length=1)
 
 
-def create_app(file_path="tasks.json"):
+class TaskUpdate(BaseModel):
+    title: str = Field(min_length=1)
+
+
+def create_app(db_path="tasks.db"):
+    path = Path(db_path).resolve()
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    engine, SessionLocal = create_database(path)
+
     app = FastAPI(
         title="Python Todo API",
-        version="1.3.0",
+        version="1.4.0",
     )
-
-    todo = TodoList()
-    todo.load_tasks(file_path)
-    lock = Lock()
 
     @app.get("/health")
     def health():
@@ -29,53 +34,83 @@ def create_app(file_path="tasks.json"):
 
     @app.get("/tasks")
     def get_tasks():
-        with lock:
-            tasks = todo.get_tasks()
+        with SessionLocal() as session:
+            tasks = session.scalars(
+                select(Task).order_by(Task.id)
+            ).all()
 
-        return [
-            {"id": index, "title": title}
-            for index, title in enumerate(tasks, start=1)
-        ]
+            return [
+                {"id": task.id, "title": task.title}
+                for task in tasks
+            ]
 
     @app.post("/tasks", status_code=201)
     def create_task(payload: TaskCreate):
-        with lock:
-            try:
-                todo.add_task(payload.title)
-            except ValueError as exc:
-                raise HTTPException(
-                    status_code=422,
-                    detail=str(exc),
-                ) from exc
+        title = payload.title.strip()
 
-            todo.save_tasks(file_path)
-            tasks = todo.get_tasks()
+        if not title:
+            raise HTTPException(
+                status_code=422,
+                detail="任务内容不能为空",
+            )
+
+        with SessionLocal.begin() as session:
+            task = Task(title=title)
+            session.add(task)
+            session.flush()
 
             return {
-                "id": len(tasks),
-                "title": tasks[-1],
+                "id": task.id,
+                "title": task.title,
+            }
+
+    @app.put("/tasks/{task_id}")
+    def update_task(task_id: int, payload: TaskUpdate):
+        title = payload.title.strip()
+
+        if not title:
+            raise HTTPException(
+                status_code=422,
+                detail="任务内容不能为空",
+            )
+
+        with SessionLocal.begin() as session:
+            task = session.get(Task, task_id)
+
+            if task is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="任务不存在",
+                )
+
+            task.title = title
+
+            return {
+                "id": task.id,
+                "title": task.title,
             }
 
     @app.delete("/tasks/{task_id}")
     def delete_task(task_id: int):
-        with lock:
-            try:
-                removed = todo.delete_task(task_id)
-            except IndexError as exc:
+        with SessionLocal.begin() as session:
+            task = session.get(Task, task_id)
+
+            if task is None:
                 raise HTTPException(
                     status_code=404,
-                    detail=str(exc),
-                ) from exc
+                    detail="任务不存在",
+                )
 
-            todo.save_tasks(file_path)
+            removed_title = task.title
+            session.delete(task)
 
             return {
                 "message": "任务已删除",
-                "title": removed,
+                "title": removed_title,
             }
 
     return app
 
 
-DATA_FILE = Path(os.getenv("TODO_DATA_FILE", "tasks.json"))
-app = create_app(DATA_FILE)
+DB_PATH = os.getenv("TODO_DB_PATH", "tasks.db")
+app = create_app(DB_PATH)

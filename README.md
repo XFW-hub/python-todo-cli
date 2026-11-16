@@ -208,3 +208,73 @@ python -m pytest -v
 ### Limitations
 
 This API is intended for local development and learning. It has no authentication, uses a JSON file for storage, and is designed for a single server process.
+
+## SQLite Database
+
+The FastAPI service uses SQLite and SQLAlchemy ORM for persistent task storage.
+
+### Features
+
+- Stable auto-increment task IDs
+- Create, read, update and delete tasks
+- SQLAlchemy ORM models and transactions
+- Persistent SQLite storage
+- Automated database tests
+
+### Run Locally
+
+Install dependencies:
+
+```bash
+python -m pip install -r requirements-api.txt
+```
+
+Start the API:
+
+```bash
+python -m uvicorn api:app --reload
+```
+
+Open the API documentation:
+
+http://127.0.0.1:8000/docs
+
+### Run with Docker
+
+Build:
+
+```bash
+docker build -f Dockerfile.web -t python-todo-api:sqlite-demo .
+```
+
+Create a volume:
+
+```bash
+docker volume create todo-sqlite-data
+```
+
+Run:
+
+```bash
+docker run -d \
+  --name todo-sqlite-api \
+  -p 127.0.0.1:8000:8000 \
+  -v todo-sqlite-data:/app/data \
+  python-todo-api:sqlite-demo
+```
+
+SQLite data is stored in `/app/data/tasks.db`.
+
+### Run Tests
+
+```bash
+python -m pip install -r requirements-dev.txt
+python -m pytest -v
+```
+
+### Notes
+
+- The existing CLI still uses JSON storage.
+- The FastAPI service uses SQLite.
+- Existing JSON task data is not automatically imported.
+- This API is intended for local development and learning, not public multi-user deployment.
