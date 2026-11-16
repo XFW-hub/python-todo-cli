@@ -58,3 +58,8 @@ jobs:
           docker logs todo-api-ci
           docker rm -f todo-api-ci
           exit 1
+      
+      - name: Check database migrations
+        run: |
+          TODO_DB_PATH=ci-check.db alembic upgrade head
+          TODO_DB_PATH=ci-check.db alembic check

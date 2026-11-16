@@ -1,5 +1,12 @@
 
-from sqlalchemy import create_engine
+from datetime import datetime
+
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    create_engine,
+    text,
+)
 from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
@@ -15,25 +22,38 @@ class Base(DeclarativeBase):
 class Task(Base):
     __tablename__ = "tasks"
 
-    # 防止 SQLite 自动重用已删除的最大 ID
-    __table_args__ = {"sqlite_autoincrement": True}
+    __table_args__ = {
+        "sqlite_autoincrement": True
+    }
 
     id: Mapped[int] = mapped_column(
-        primary_key=True
+        primary_key=True,
     )
 
     title: Mapped[str] = mapped_column(
-        nullable=False
+        nullable=False,
+    )
+
+    completed: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        server_default=text("0"),
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        nullable=False,
+        server_default=text("CURRENT_TIMESTAMP"),
     )
 
 
 def create_database(db_path):
     engine = create_engine(
         f"sqlite:///{db_path}",
-        connect_args={"check_same_thread": False},
+        connect_args={
+            "check_same_thread": False
+        },
     )
-
-    Base.metadata.create_all(engine)
 
     session_factory = sessionmaker(
         bind=engine,
