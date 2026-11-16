@@ -17,6 +17,15 @@ class TaskUpdate(BaseModel):
     title: str = Field(min_length=1)
 
 
+def task_to_dict(task):
+    return {
+        "id": task.id,
+        "title": task.title,
+        "completed": task.completed,
+        "created_at": task.created_at.isoformat(),
+    }
+
+
 def create_app(db_path="tasks.db"):
     path = Path(db_path).resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -25,7 +34,7 @@ def create_app(db_path="tasks.db"):
 
     app = FastAPI(
         title="Python Todo API",
-        version="1.4.0",
+        version="1.5.0",
     )
 
     @app.get("/health")
@@ -40,7 +49,7 @@ def create_app(db_path="tasks.db"):
             ).all()
 
             return [
-                {"id": task.id, "title": task.title}
+                task_to_dict(task)
                 for task in tasks
             ]
 
@@ -58,11 +67,9 @@ def create_app(db_path="tasks.db"):
             task = Task(title=title)
             session.add(task)
             session.flush()
+            session.refresh(task)
 
-            return {
-                "id": task.id,
-                "title": task.title,
-            }
+            return task_to_dict(task)
 
     @app.put("/tasks/{task_id}")
     def update_task(task_id: int, payload: TaskUpdate):
@@ -84,11 +91,21 @@ def create_app(db_path="tasks.db"):
                 )
 
             task.title = title
+            return task_to_dict(task)
 
-            return {
-                "id": task.id,
-                "title": task.title,
-            }
+    @app.patch("/tasks/{task_id}/complete")
+    def complete_task(task_id: int):
+        with SessionLocal.begin() as session:
+            task = session.get(Task, task_id)
+
+            if task is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="任务不存在",
+                )
+
+            task.completed = True
+            return task_to_dict(task)
 
     @app.delete("/tasks/{task_id}")
     def delete_task(task_id: int):
@@ -101,12 +118,12 @@ def create_app(db_path="tasks.db"):
                     detail="任务不存在",
                 )
 
-            removed_title = task.title
+            title = task.title
             session.delete(task)
 
             return {
                 "message": "任务已删除",
-                "title": removed_title,
+                "title": title,
             }
 
     return app

@@ -278,3 +278,63 @@ python -m pytest -v
 - The FastAPI service uses SQLite.
 - Existing JSON task data is not automatically imported.
 - This API is intended for local development and learning, not public multi-user deployment.
+
+## Database Migrations
+
+This project uses Alembic to manage SQLite database schema changes.
+
+### Initialize a New Database
+
+```bash
+alembic upgrade head
+```
+
+### Check Current Database Version
+
+```bash
+alembic current
+```
+
+### View Migration History
+
+```bash
+alembic history
+```
+
+### Check for Pending Schema Changes
+
+```bash
+alembic check
+```
+
+### Existing Databases
+
+Databases created before Alembic was introduced require a one-time baseline registration.
+
+After verifying the old schema and backing up the database:
+
+```bash
+alembic stamp baseline_tasks
+alembic upgrade head
+```
+
+Do not stamp an empty database or a database with an unknown schema.
+
+### New Task Fields
+
+- `completed`: whether a task has been completed
+- `created_at`: creation timestamp, stored in UTC
+
+### Complete a Task
+
+```bash
+curl -X PATCH \
+  http://127.0.0.1:8000/tasks/1/complete
+```
+
+### Important Notes
+
+- Back up existing databases before applying schema migrations.
+- Existing task data is preserved by the migration.
+- Historical tasks receive a migration-time timestamp because their original creation times were not stored.
+- Alembic migration files are committed to Git together with application code.
