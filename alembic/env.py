@@ -1,25 +1,23 @@
 
-import os
-from pathlib import Path
-
 from alembic import context
 from sqlalchemy import create_engine
 
-from database import Base
+from database import Base, get_database_url
 
 
 target_metadata = Base.metadata
 
-db_path = Path(
-    os.getenv("TODO_DB_PATH", "tasks.db")
-).expanduser().resolve()
-
-db_url = f"sqlite:///{db_path.as_posix()}"
-
 
 def run_migrations_offline():
+    url = get_database_url()
+
+    if hasattr(url, "render_as_string"):
+        url = url.render_as_string(
+            hide_password=False
+        )
+
     context.configure(
-        url=db_url,
+        url=url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -31,12 +29,8 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    db_path.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    engine = create_engine(db_url)
+    url = get_database_url()
+    engine = create_engine(url)
 
     with engine.connect() as connection:
         context.configure(

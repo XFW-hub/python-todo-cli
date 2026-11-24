@@ -26,11 +26,8 @@ def task_to_dict(task):
     }
 
 
-def create_app(db_path="tasks.db"):
-    path = Path(db_path).resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
-
-    engine, SessionLocal = create_database(path)
+def create_app(db_path=None):
+    engine, SessionLocal = create_database(db_path)
 
     app = FastAPI(
         title="Python Todo API",
@@ -129,5 +126,4 @@ def create_app(db_path="tasks.db"):
     return app
 
 
-DB_PATH = os.getenv("TODO_DB_PATH", "tasks.db")
-app = create_app(DB_PATH)
+app = create_app()
