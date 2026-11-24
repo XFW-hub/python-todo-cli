@@ -63,3 +63,53 @@ jobs:
         run: |
           TODO_DB_PATH=ci-check.db alembic upgrade head
           TODO_DB_PATH=ci-check.db alembic check
+
+  
+  postgres-integration:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Start PostgreSQL and API
+        run: |
+          export POSTGRES_USER=todo_user
+          export POSTGRES_DB=todo_db
+          export POSTGRES_PASSWORD=ci_local_only_password_2026
+
+          docker compose up -d --build
+
+          for i in $(seq 1 30); do
+            if curl --fail --silent \
+              http://127.0.0.1:8000/health; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker compose ps -a
+          docker compose logs
+          exit 1
+
+      - name: Verify PostgreSQL CRUD
+        run: |
+          curl --fail --silent --show-error \
+            -X POST http://127.0.0.1:8000/tasks \
+            -H "Content-Type: application/json" \
+            -d '{"title":"CI PostgreSQL test"}'
+
+          echo
+
+          curl --fail --silent --show-error \
+            http://127.0.0.1:8000/tasks
+
+      - name: Clean up containers
+        if: always()
+        env:
+          POSTGRES_USER: todo_user
+          POSTGRES_DB: todo_db
+          POSTGRES_PASSWORD: ci_local_only_password_2026
+        run: |
+          docker compose logs || true
+          docker compose down -v || true

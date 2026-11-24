@@ -338,3 +338,81 @@ curl -X PATCH \
 - Existing task data is preserved by the migration.
 - Historical tasks receive a migration-time timestamp because their original creation times were not stored.
 - Alembic migration files are committed to Git together with application code.
+
+
+## PostgreSQL and Docker Compose
+
+The FastAPI service supports PostgreSQL as an independent database service.
+
+Docker Compose manages three services:
+
+- `db`: PostgreSQL 17 database
+- `migrate`: Alembic database migration job
+- `api`: FastAPI application
+
+### Requirements
+
+- Docker Desktop
+- Docker Compose v2
+
+### Configuration
+
+Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+Set a strong `POSTGRES_PASSWORD` in `.env`.
+
+Do not commit `.env` to Git.
+
+### Start the Application
+
+```bash
+docker compose up -d --build
+```
+
+### View Service Status
+
+```bash
+docker compose ps -a
+```
+
+### Access the API
+
+- API: http://127.0.0.1:8000
+- Swagger UI: http://127.0.0.1:8000/docs
+- Health check: http://127.0.0.1:8000/health
+
+### Inspect PostgreSQL
+
+```bash
+docker compose exec db psql -U todo_user -d todo_db
+```
+
+### View Logs
+
+```bash
+docker compose logs api
+docker compose logs db
+docker compose logs migrate
+```
+
+### Stop the Application
+
+```bash
+docker compose down
+```
+
+The PostgreSQL named volume is retained by default.
+
+**Warning:** `docker compose down -v` deletes Compose-managed named volumes and can destroy database data.
+
+### Database Compatibility
+
+- The CLI retains JSON storage.
+- SQLite remains supported for local development and tests.
+- Docker Compose uses PostgreSQL.
+- SQLite data is not automatically transferred into PostgreSQL.
+- Alembic manages schema initialization and future migrations.

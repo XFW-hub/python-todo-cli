@@ -10,19 +10,24 @@ depends_on = None
 
 
 def upgrade():
+    
     with op.batch_alter_table(
-        "tasks",
-        recreate="always",
-        table_kwargs={
-            "sqlite_autoincrement": True
-        },
-    ) as batch_op:
+    "tasks",
+    **batch_options(),
+) as batch_op:
+        dialect = op.get_bind().dialect.name
+
+        completed_default = (
+            sa.text("false")
+            if dialect == "postgresql"
+            else sa.text("0")
+        )
         batch_op.add_column(
             sa.Column(
                 "completed",
                 sa.Boolean(),
                 nullable=False,
-                server_default=sa.text("0"),
+                server_default=completed_default,
             )
         )
 
@@ -40,11 +45,19 @@ def upgrade():
 
 def downgrade():
     with op.batch_alter_table(
-        "tasks",
-        recreate="always",
-        table_kwargs={
-            "sqlite_autoincrement": True
-        },
-    ) as batch_op:
+    "tasks",
+    **batch_options(),
+) as batch_op:
         batch_op.drop_column("created_at")
         batch_op.drop_column("completed")
+
+def batch_options():
+    if op.get_bind().dialect.name == "sqlite":
+        return {
+            "recreate": "always",
+            "table_kwargs": {
+                "sqlite_autoincrement": True
+            },
+        }
+
+    return {"recreate": "never"}
