@@ -416,3 +416,84 @@ The PostgreSQL named volume is retained by default.
 - Docker Compose uses PostgreSQL.
 - SQLite data is not automatically transferred into PostgreSQL.
 - Alembic manages schema initialization and future migrations.
+
+
+## Database Engineering
+
+### PostgreSQL Integration Tests
+
+Start the isolated PostgreSQL test database:
+
+```bash
+docker compose -f compose.test.yaml up -d --wait
+```
+
+Run PostgreSQL integration tests:
+
+```bash
+RUN_POSTGRES_TESTS=1 python -m pytest -v -m postgres
+```
+
+Run all tests:
+
+```bash
+RUN_POSTGRES_TESTS=1 python -m pytest -v
+```
+
+Stop the test database:
+
+```bash
+docker compose -f compose.test.yaml down
+```
+
+### Connection Pool Configuration
+
+The PostgreSQL connection pool supports the following environment variables:
+
+| Variable | Default |
+|---|---|
+| DB_POOL_SIZE | 5 |
+| DB_MAX_OVERFLOW | 10 |
+| DB_POOL_TIMEOUT | 30 |
+| DB_POOL_RECYCLE | 1800 |
+
+Connection health checks are enabled using SQLAlchemy pool_pre_ping.
+
+### Database Backup
+
+Start the main application and execute:
+
+```bash
+./scripts/backup.sh
+```
+
+Backup files are stored in the local backups directory.
+
+### Database Restore
+
+Create a separate database:
+
+```bash
+docker compose exec db \
+  createdb -U todo_user todo_restore_db
+```
+
+Restore a backup:
+
+```bash
+docker compose exec -T db \
+  pg_restore -U todo_user \
+  -d todo_restore_db \
+  --exit-on-error \
+  --single-transaction \
+  < backups/todo.dump
+```
+
+Replace the backup filename with the actual backup file.
+
+### Safety Notes
+
+- Test databases are isolated from application data.
+- Database backups must not be committed to Git.
+- Restore backups into a separate database for verification.
+- Docker volumes provide persistence but do not replace backups.

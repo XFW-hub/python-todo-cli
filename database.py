@@ -78,19 +78,37 @@ def get_database_url(db_path=None):
     return f"sqlite:///{path}"
 
 
+
 def create_database(db_path=None):
     url = get_database_url(db_path)
 
-    kwargs = {}
+    kwargs = {
+        "pool_pre_ping": True,
+    }
 
     if str(url).startswith("sqlite:"):
         kwargs["connect_args"] = {
             "check_same_thread": False
         }
 
+    else:
+        kwargs.update({
+            "pool_size": int(
+                os.getenv("DB_POOL_SIZE", "5")
+            ),
+            "max_overflow": int(
+                os.getenv("DB_MAX_OVERFLOW", "10")
+            ),
+            "pool_timeout": int(
+                os.getenv("DB_POOL_TIMEOUT", "30")
+            ),
+            "pool_recycle": int(
+                os.getenv("DB_POOL_RECYCLE", "1800")
+            ),
+        })
+
     engine = create_engine(
         url,
-        pool_pre_ping=True,
         **kwargs,
     )
 
@@ -100,3 +118,4 @@ def create_database(db_path=None):
     )
 
     return engine, session_factory
+
