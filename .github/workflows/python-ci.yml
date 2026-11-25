@@ -113,3 +113,42 @@ jobs:
         run: |
           docker compose logs || true
           docker compose down -v || true
+
+
+  postgres-pytest:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install \
+            -r requirements-dev.txt
+
+      - name: Start PostgreSQL test database
+        run: |
+          docker compose \
+            -f compose.test.yaml \
+            up -d --wait
+
+      - name: Run PostgreSQL integration tests
+        env:
+          RUN_POSTGRES_TESTS: "1"
+        run: |
+          python -m pytest -v -m postgres
+
+      - name: Clean up test database
+        if: always()
+        run: |
+          docker compose \
+            -f compose.test.yaml logs
+
+          docker compose \
+            -f compose.test.yaml down

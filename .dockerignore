@@ -17,3 +17,6 @@ LICENSE
 *.db-wal
 *.db-shm
 *.db-journal
+backups/
+*.dump
+*.db.bak

@@ -24,3 +24,7 @@ env/
 # Local todo data
 tasks.json
 tasks.db
+
+backups/
+*.dump
+*.db.bak
