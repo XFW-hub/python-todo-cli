@@ -497,3 +497,69 @@ Replace the backup filename with the actual backup file.
 - Database backups must not be committed to Git.
 - Restore backups into a separate database for verification.
 - Docker volumes provide persistence but do not replace backups.
+
+## Redis Caching
+
+The application uses Redis to cache task list queries and reduce repeated PostgreSQL reads.
+
+### Cache Strategy
+
+- Cache Aside pattern
+- Default cache TTL: 60 seconds
+- Cache invalidation after successful database writes
+- Database fallback when Redis is unavailable
+- Approximate LRU eviction policy
+
+PostgreSQL remains the source of truth. Redis is an optional caching layer.
+
+### Configuration
+
+| Environment Variable | Default |
+|---|---|
+| REDIS_URL | Disabled when not configured |
+| CACHE_TTL | 60 |
+
+Docker Compose configures Redis automatically.
+
+### Start the Application
+
+```bash
+docker compose up -d --build
+```
+
+### Inspect Redis
+
+```bash
+docker compose exec redis redis-cli
+```
+
+```redis
+GET todo:v1:tasks
+TTL todo:v1:tasks
+INFO stats
+```
+
+### Run Integration Tests
+
+```bash
+docker compose -f compose.test.yaml up -d --wait
+
+RUN_POSTGRES_TESTS=1 RUN_REDIS_TESTS=1 \
+python -m pytest -v
+```
+
+### Cache Failure Recovery
+
+The application falls back to the database when Redis is unavailable.
+
+```bash
+docker compose stop redis
+curl http://127.0.0.1:8000/tasks
+docker compose start redis
+```
+
+### Limitations
+
+The cache provides best-effort consistency through invalidation and TTL. Strong consistency, distributed cache rebuilding locks, and production Redis high availability are not implemented.
+
+Redis is used only for rebuildable cache data and does not replace PostgreSQL persistence or backups.
