@@ -44,12 +44,37 @@ services:
       DB_USER: ${POSTGRES_USER}
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       DB_NAME: ${POSTGRES_DB}
+      REDIS_URL: redis://redis:6379/0
+      CACHE_TTL: "60"
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
       migrate:
         condition: service_completed_successfully
     restart: unless-stopped
+  redis:
+    image: redis:7.4-alpine
+
+    command:
+      - redis-server
+      - --maxmemory
+      - 64mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+
+

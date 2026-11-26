@@ -8,7 +8,7 @@ COPY requirements-api.txt ./
 RUN python -m pip install --no-cache-dir \
     -r requirements-api.txt
 
-COPY api.py database.py ./
+COPY api.py database.py cache.py ./
 COPY alembic.ini ./
 COPY alembic ./alembic
 
